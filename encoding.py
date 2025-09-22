@@ -1,15 +1,20 @@
 from music21 import *
+from music21 import analysis
 import numpy as np
 from utility import visualize_as_matrix, play_dataset_element, voice_ranges, part_names
 import pickle
 
-# Get all bach chorales and ensure they have exactly 4 parts
+# Get all bach chorales and ensure they have exactly 4 parts and are in 4/4 time
 songs = corpus.getComposer('bach')
 valid_songs = []
 for song in songs:
     chorale = converter.parse(song)
+    ts = chorale.parts[0].getElementsByClass('Measure')[0].getTimeSignatures()
+    if ts and ts[0].ratioString != '4/4':
+        continue
     if len(chorale.parts) == 4:
         valid_songs.append(song)
+    
 
 def process_part(part, start_measure, voice_range):
     # For a given part and start measure, return piano roll representation
@@ -66,6 +71,29 @@ def process_part(part, start_measure, voice_range):
     
     return roll
 
+def get_buffers(chorale, start_measure):
+    minBuffers = []
+    maxBuffers = []
+    segment = chorale.measures(start_measure, start_measure + 3)
+    for i in range(4):
+        part = segment.parts[i]
+        for element in part.flatten().notes:
+            if not isinstance(element, (note.Note, chord.Chord)):
+                continue
+            midis = [n.pitch.midi for n in part.flatten().notes if isinstance(n, note.Note)]
+            chords = [c for c in part.flatten().notes if isinstance(c, chord.Chord)]
+            if len(chords) > 0:
+                midis.append(max(ch.pitches[0].midi for ch in chords))
+            low = min(midis)
+            high = max(midis)
+            minBuffers.append(low - voice_ranges[part_names[i]]['min'])
+            maxBuffers.append(voice_ranges[part_names[i]]['max'] - high)
+    if(minBuffers == [] or maxBuffers == []):
+        return []
+    minBuffer, maxBuffer = min(minBuffers), max(maxBuffers)
+    transpositions = [n for n in range(-minBuffer, maxBuffer) if n != 0]
+    return transpositions
+
 # For all valid songs, extract all valid 4 measure segments, proces into piano roll
 # separate into inputs and outputs, and save to dataset file.
 dataset = []
@@ -76,31 +104,36 @@ for filename in valid_songs:
     for start in range(1, measure_count - 3):
         x = None
         y = None
+
         invalid = False
 
-        # Loop through each part, process it, and add it to the dataset
-        for i in range(4):
-            processed_part = process_part(chorale.parts[i], start, voice_ranges[part_names[i]])
-            if processed_part is not None:
-                if i == 0:
-                    x = processed_part.flatten()
-                elif i == 1:
-                    y = processed_part.flatten()
+        transpositions = get_buffers(chorale, start)
+        print(transpositions)
+        for semitones in transpositions:
+            # Loop through each part, process it, and add it to the dataset
+            for i in range(4):
+                processed_part = process_part(chorale.parts[i].transpose(semitones), start, voice_ranges[part_names[i]])
+                if processed_part is not None:
+                    if i == 0:
+                        x = processed_part.flatten()
+                    elif i == 1:
+                        y = processed_part.flatten()
+                    else:
+                        y = np.concatenate([y, processed_part.flatten()])
                 else:
-                    y = np.concatenate([y, processed_part.flatten()])
-            else:
-                invalid = True
-                break
+                    invalid = True
+                    break
 
-        if invalid:
-            continue   
+            if invalid:
+                continue   
 
-        dataset.append({
-            'chorale': filename,
-            'measures': (start, start+3),
-            'input': x,
-            'output': y
-        })
+            dataset.append({
+                'chorale': filename,
+                'transpose': semitones,
+                'measures': (start, start+3),
+                'input': x,
+                'output': y
+            })
 
 print("Size: ", len(dataset))
 with open('dataset.pkl', 'wb') as f:

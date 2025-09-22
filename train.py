@@ -11,7 +11,7 @@ elif torch.backends.mps.is_available():
 else:
     device = torch.device("cpu")
 torch.manual_seed(8)
-with open('chorale_dataset.pkl', 'rb') as f:
+with open('dataset.pkl', 'rb') as f:
     dataset = pickle.load(f)
 
 # Hyperparameters
@@ -21,9 +21,9 @@ val_iters = 5
 val_ratio = .1
 batch_size = 32
 learning_rate = 0.002
-hidden_size = 200
-dropout_rate = 0
-weight_decay = 0#1e-5
+hidden_size = 500
+dropout_rate = .1
+weight_decay = 1e-5
 
 # Create data loaders
 t_set = TensorDataset(
