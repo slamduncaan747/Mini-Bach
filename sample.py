@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 from music21 import *
 from utility import visualize_as_matrix, play_dataset_element, voice_ranges
+from model import FeedForwardNN
 
 def probabilities_to_one_hot(model_output):
     batch_size = model_output.shape[0]
@@ -26,7 +27,8 @@ def probabilities_to_one_hot(model_output):
     return final_output.view(batch_size, -1)
 
 # Get model
-model = torch.load('checkpoints/checkpoint300.pth', weights_only=False)
+model = FeedForwardNN(input_size=1344, hidden_size=200, output_size=4480, dropout_rate=0)
+model.load_state_dict(torch.load('checkpoints/checkpoint1000.pth'))
 model.eval()
 
 # Choose a random dataset element, and generate ouput
@@ -51,4 +53,4 @@ dataset_element = {
 
 # Visualize piano roll, convert to midi, and play midi audio
 visualize_as_matrix(dataset_element, voice_ranges)
-play_dataset_element(dataset_element, voice_ranges, tempo=100)
+play_dataset_element(dataset_element, voice_ranges, bpm=100)
