@@ -22,6 +22,8 @@ val_ratio = .1
 batch_size = 32
 learning_rate = 0.002
 hidden_size = 200
+dropout_rate = 0.3
+weight_decay = 1e-5
 
 # Create data loaders
 t_set = TensorDataset(
@@ -35,10 +37,10 @@ train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
 # Define model, loss function, and optimizer
-model = FeedForwardNN(input_size=1344, hidden_size=hidden_size, output_size=4480)
+model = FeedForwardNN(input_size=1344, hidden_size=hidden_size, output_size=4480, dropout_rate=dropout_rate)
 model.to(device)
 loss_function = torch.nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rat, weight_decay=weight_decay)
 
 # Training loop
 for epoch in range(epochs):
