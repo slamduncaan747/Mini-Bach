@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 import torch
 from torch.utils.data import DataLoader, TensorDataset, random_split
-from model import FeedForwardNN
+from model import FeedForwardNN as FeedForwardNN3Layered
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
