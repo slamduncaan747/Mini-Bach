@@ -4,6 +4,7 @@ import pickle
 from music21 import *
 from utility import visualize_as_matrix, play_dataset_element, voice_ranges
 from model import FeedForwardNN
+import os
 
 def probabilities_to_one_hot(model_output):
     batch_size = model_output.shape[0]
@@ -53,4 +54,6 @@ dataset_element = {
 
 # Visualize piano roll, convert to midi, and play midi audio
 visualize_as_matrix(dataset_element, voice_ranges)
-play_dataset_element(dataset_element, voice_ranges, bpm=100)
+midi = play_dataset_element(dataset_element, voice_ranges, bpm=100)
+os.makedirs('samples', exist_ok=True)
+midi.write('midi', fp='samples/chorale.mid')

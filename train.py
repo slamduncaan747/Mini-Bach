@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 import torch
 from torch.utils.data import DataLoader, TensorDataset, random_split
-from model import FeedForwardNN as FeedForwardNN3Layered
+from model import FeedForwardNN
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -21,9 +21,7 @@ val_iters = 5
 val_ratio = .1
 batch_size = 4096
 learning_rate = 0.002
-hidden_size1 = 5000
-hidden_size2 = 4000
-hidden_size3 = 3000
+hidden_size = 200
 dropout_rate = .1
 weight_decay = 1e-5
 
@@ -39,7 +37,7 @@ train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
 # Define model, loss function, and optimizer
-model = FeedForwardNN3Layered(input_size=1344, hidden_size1=hidden_size1, hidden_size2 = hidden_size2, hidden_size3 = hidden_size3, output_size=4480, dropout_rate=dropout_rate)
+model = FeedForwardNN(input_size=1344, hidden_size=hidden_size, output_size=4480, dropout_rate=dropout_rate)
 model.to(device)
 loss_function = torch.nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
